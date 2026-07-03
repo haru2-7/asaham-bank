@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7c7d9" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <title>朝ハムバンク</title>
+  <style>
+    :root{
+      --card:#ffffffd9;
+      --ink:#49333a;
+      --muted:#8f707a;
+      --accent:#f197b8;
+      --accent2:#ffd76e;
+      --soft:#ffe4ed;
+      --shadow:0 14px 34px rgba(116,70,88,.16);
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left,#fff 0 18%,transparent 32%),
+        linear-gradient(160deg,#fff7f9 0%,#fff2d8 100%);
+      min-height:100svh;
+      padding:max(18px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .wrap{max-width:520px;margin:0 auto}
+    header{padding:12px 4px 18px;text-align:center}
+    h1{margin:8px 0 4px;font-size:34px;letter-spacing:.04em}
+    .sub{margin:0;color:var(--muted);font-size:14px}
+    .ham{
+      width:92px;height:92px;margin:10px auto 8px;border-radius:50%;
+      background:linear-gradient(#f5c28e,#dfa16d);
+      box-shadow:inset 0 -10px 0 rgba(121,71,38,.10), var(--shadow);
+      position:relative;
+    }
+    .ham:before,.ham:after{
+      content:"";position:absolute;top:20px;width:18px;height:18px;border-radius:50%;background:#744629;
+    }
+    .ham:before{left:24px}.ham:after{right:24px}
+    .nose{position:absolute;left:50%;top:45px;transform:translateX(-50%);width:13px;height:9px;background:#c06b73;border-radius:50%}
+    .mouth{position:absolute;left:50%;top:57px;transform:translateX(-50%);font-size:20px;color:#744629}
+    .card{
+      background:var(--card);
+      backdrop-filter:blur(10px);
+      border:1px solid rgba(255,255,255,.8);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      margin:14px 0;
+    }
+    .big{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 10px}
+    .stat{background:#fff;border-radius:18px;padding:14px 10px;text-align:center;border:1px solid #ffe0ea}
+    .stat b{font-size:24px;display:block}
+    .stat span{font-size:12px;color:var(--muted)}
+    button,a.btn{
+      appearance:none;border:0;border-radius:999px;
+      padding:15px 18px;font-weight:700;font-size:16px;
+      color:var(--ink);background:var(--soft);
+      box-shadow:0 8px 20px rgba(170,98,119,.12);
+      text-decoration:none;display:block;text-align:center;width:100%;
+      cursor:pointer;
+    }
+    button.done{background:linear-gradient(135deg,#ffd66b,#ffeaa6)}
+    button:active,a.btn:active{transform:translateY(1px)}
+    .actions{display:grid;gap:10px}
+    .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
+    .dow{font-size:11px;color:var(--muted);text-align:center}
+    .day{
+      min-height:38px;border-radius:12px;background:#fff;border:1px solid #f4d6df;
+      display:flex;align-items:center;justify-content:center;font-size:13px;position:relative;
+      user-select:none;
+    }
+    .day.done{background:#fff2b8;border-color:#ffd66b}
+    .day.done:after{content:"🐹";position:absolute;right:1px;bottom:-5px;font-size:16px}
+    .day.today{outline:2px solid var(--accent)}
+    .wish{display:flex;gap:8px;margin-top:10px}
+    input{flex:1;border:1px solid #efd3dc;background:#fff;border-radius:14px;padding:12px;font-size:16px;min-width:0}
+    ul{padding-left:20px;margin:12px 0 0}
+    li{margin:6px 0}
+    .smallBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+    .ghost{background:#fff;color:var(--muted);font-size:13px;padding:11px}
+    .note{font-size:12px;color:var(--muted);line-height:1.55}
+    .toast{
+      position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+      background:#49333a;color:white;padding:10px 14px;border-radius:999px;
+      font-size:13px;opacity:0;pointer-events:none;transition:.2s;
+    }
+    .toast.show{opacity:1}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="ham"><div class="nose"></div><div class="mouth">ω</div></div>
+      <h1>朝ハムバンク</h1>
+      <p class="sub">ラジオ体操したぶん、ぽかぽか貯金。</p>
+    </header>
+
+    <section class="card">
+      <div class="big">
+        <div class="stat"><b id="coins">0</b><span>ぽかぽか</span></div>
+        <div class="stat"><b id="monthCount">0</b><span>今月できた回数</span></div>
+        <div class="stat"><b id="streak">0</b><span>連続日数</span></div>
+        <div class="stat"><b id="level">巣穴</b><span>今月のハルハム</span></div>
+      </div>
+      <div class="actions">
+        <a class="btn" id="radioLink" href="https://www.youtube.com/results?search_query=%E3%83%A9%E3%82%B8%E3%82%AA%E4%BD%93%E6%93%8D+%E7%AC%AC%E4%B8%80" target="_blank" rel="noopener">ラジオ体操をひらく</a>
+        <button class="done" id="doneBtn" type="button">できた！ぽかぽか貯金する</button>
+      </div>
+      <p class="note">連続が途切れても、貯金は減りません。朝にできたらえらい、できない日も巣穴で休む。</p>
+    </section>
+
+    <section class="card">
+      <strong id="monthTitle"></strong>
+      <div class="calendar" id="calendar"></div>
+    </section>
+
+    <section class="card">
+      <strong>ごほうびリスト</strong>
+      <div class="wish">
+        <input id="wishInput" placeholder="例：ギリーシューズ、紅茶、シール" />
+        <button id="addWish" type="button" style="width:auto;padding:12px 16px">追加</button>
+      </div>
+      <ul id="wishList"></ul>
+      <div class="smallBtns">
+        <button class="ghost" id="exportBtn" type="button">記録を書き出す</button>
+        <button class="ghost" id="resetBtn" type="button">全リセット</button>
+      </div>
+    </section>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const KEY = "asaham_bank_v1";
+
+  function show(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"), 1600);
+  }
+  function getLocalYMD(d){
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,"0");
+    const day=String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+  function getLocalYM(d){
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,"0");
+    return `${y}-${m}`;
+  }
+
+  const today = new Date();
+  let memoryData = {done:{}, wishes:[]};
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw) memoryData = JSON.parse(raw);
+    }catch(e){}
+    if(!memoryData.done) memoryData.done = {};
+    if(!Array.isArray(memoryData.wishes)) memoryData.wishes = [];
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(memoryData)); }catch(e){}
+  }
+  function computeStreak(){
+    let count=0;
+    let d=new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    while(memoryData.done[getLocalYMD(d)]){
+      count++;
+      d.setDate(d.getDate()-1);
+    }
+    return count;
+  }
+  function render(){
+    const thisMonth = getLocalYM(today);
+    const monthCount = Object.keys(memoryData.done).filter(k=>k.startsWith(thisMonth)).length;
+    const total = Object.keys(memoryData.done).length;
+    const coins = total * 100 + Math.floor(monthCount / 7) * 300;
+    const streak = computeStreak();
+    document.getElementById("coins").textContent = coins;
+    document.getElementById("monthCount").textContent = monthCount;
+    document.getElementById("streak").textContent = streak;
+    document.getElementById("level").textContent =
+      monthCount >= 20 ? "朝の勇者" :
+      monthCount >= 15 ? "えらいハム" :
+      monthCount >= 7 ? "ぽかぽか" :
+      monthCount >= 3 ? "起動中" : "巣穴";
+
+    const year=today.getFullYear();
+    const month=today.getMonth();
+    const first=new Date(year,month,1);
+    const last=new Date(year,month+1,0);
+    document.getElementById("monthTitle").textContent = `${year}年${month+1}月`;
+
+    const cal=document.getElementById("calendar");
+    cal.innerHTML="";
+    ["日","月","火","水","木","金","土"].forEach(x=>{
+      const e=document.createElement("div");
+      e.className="dow"; e.textContent=x; cal.appendChild(e);
+    });
+    for(let i=0;i<first.getDay();i++){
+      const e=document.createElement("div");
+      e.className="day"; e.style.visibility="hidden"; cal.appendChild(e);
+    }
+    for(let n=1;n<=last.getDate();n++){
+      const d=new Date(year,month,n);
+      const key=getLocalYMD(d);
+      const e=document.createElement("button");
+      e.type="button";
+      e.className="day"+(memoryData.done[key]?" done":"")+(key===getLocalYMD(today)?" today":"");
+      e.textContent=n;
+      e.addEventListener("click",()=>{
+        if(memoryData.done[key]) delete memoryData.done[key];
+        else memoryData.done[key]=true;
+        save(); render();
+      });
+      cal.appendChild(e);
+    }
+
+    const ul=document.getElementById("wishList");
+    ul.innerHTML="";
+    memoryData.wishes.forEach((w,i)=>{
+      const li=document.createElement("li");
+      li.textContent=w;
+      li.addEventListener("click",()=>{
+        if(confirm("このごほうびを消しますか？")){
+          memoryData.wishes.splice(i,1);
+          save(); render();
+        }
+      });
+      ul.appendChild(li);
+    });
+  }
+  function addWish(){
+    const input=document.getElementById("wishInput");
+    const v=input.value.trim();
+    if(!v) return;
+    memoryData.wishes.push(v);
+    input.value="";
+    save(); render(); show("ごほうびリストに追加したよ");
+  }
+
+  window.addEventListener("DOMContentLoaded",()=>{
+    load(); render();
+
+    if("serviceWorker" in navigator){
+      navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    }
+
+    document.getElementById("doneBtn").addEventListener("click",()=>{
+      memoryData.done[getLocalYMD(today)] = true;
+      save(); render(); show("ぽかぽか貯金したよ");
+    });
+    document.getElementById("addWish").addEventListener("click", addWish);
+    document.getElementById("wishInput").addEventListener("keydown",(e)=>{
+      if(e.key==="Enter") addWish();
+    });
+    document.getElementById("resetBtn").addEventListener("click",()=>{
+      if(confirm("朝ハムバンクの記録を全部消しますか？")){
+        memoryData={done:{}, wishes:[]};
+        save(); render(); show("リセットしたよ");
+      }
+    });
+    document.getElementById("exportBtn").addEventListener("click", async ()=>{
+      const text=JSON.stringify(memoryData,null,2);
+      try{
+        await navigator.clipboard.writeText(text);
+        show("記録をコピーしたよ");
+      }catch(e){
+        alert(text);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
